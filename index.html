@@ -3771,6 +3771,14 @@ h1,h2,h3,h4{font-weight:700;letter-spacing:-.02em}
           <i class="fa-solid fa-chart-line"></i>
           <span>الإحصائيات</span>
         </div>
+         <div class="nav-item" onclick="analyzePerformance()">
+  <i class="fa-solid fa-brain"></i>
+  <span>تحليل AI</span>
+</div>
+         <div class="nav-item" onclick="openGroupsPage()">
+  <i class="fa-solid fa-users"></i>
+  <span>المجموعات</span>
+</div>
         <div class="nav-item" data-page="achievements" onclick="navigateTo('achievements')">
           <i class="fa-solid fa-trophy"></i>
           <span>الإنجازات</span>
@@ -9820,7 +9828,239 @@ function toggleMusic(){
     });
   }
 }
-   
+   /* =====================================================
+   AI PERFORMANCE ANALYSIS
+===================================================== */
+function analyzePerformance(){
+  var totalLessons = 0, memorized = 0, totalCards = 0;
+  var subjects = [];
+
+  state.subjects.forEach(function(s){
+    var subTotal = s.lessons.length;
+    var subMem = s.lessons.filter(function(l){ return l.status === 'memorized'; }).length;
+    var subCards = 0;
+    s.lessons.forEach(function(l){ subCards += l.cards.length; });
+
+    totalLessons += subTotal;
+    memorized += subMem;
+    totalCards += subCards;
+
+    subjects.push({
+      name: s.name,
+      total: subTotal,
+      memorized: subMem,
+      pct: subTotal ? Math.round(subMem / subTotal * 100) : 0
+    });
+  });
+
+  var pct = totalLessons ? Math.round(memorized / totalLessons * 100) : 0;
+  var insights = [];
+
+  if(pct >= 80) insights.push({t:'good', i:'🏆', m:'أداء ممتاز! حفظت ' + pct + '%'});
+  else if(pct >= 50) insights.push({t:'info', i:'👍', m:'أداء جيد! حفظت ' + pct + '%'});
+  else if(pct >= 30) insights.push({t:'warn', i:'💪', m:'تحتاج جهد أكثر'});
+  else insights.push({t:'warn', i:'🚨', m:'ابدأ الآن!'});
+
+  if(subjects.length > 0){
+    var best = subjects.slice().sort(function(a,b){ return b.pct - a.pct; })[0];
+    if(best.pct > 0) insights.push({t:'good', i:'⭐', m:'أفضل مادة: ' + best.name});
+
+    var worst = subjects.slice().sort(function(a,b){ return a.pct - b.pct; })[0];
+    if(worst.pct < 50 && worst.total > 0) insights.push({t:'warn', i:'📚', m:'تحتاج تركيز: ' + worst.name});
+  }
+
+  var hour = new Date().getHours();
+  if(hour >= 20 || hour < 5) insights.push({t:'info', i:'🌙', m:'تدرس في الليل — وقت هادئ'});
+  else if(hour >= 5 && hour < 12) insights.push({t:'good', i:'☀️', m:'تدرس في الصباح — أفضل وقت للحفظ'});
+  else insights.push({t:'info', i:'🌤️', m:'تدرس في النهار'});
+
+  var streak = getStreak();
+  if(streak >= 7) insights.push({t:'good', i:'🔥', m:'سلسلة رائعة! ' + streak + ' يوم'});
+  else if(streak >= 3) insights.push({t:'info', i:'🔥', m:'استمر! ' + streak + ' أيام'});
+  else insights.push({t:'warn', i:'⚡', m:'حاول تدرس كل يوم'});
+
+  var suggestions = [];
+  if(state.subjects.length < 5) suggestions.push('أضف المزيد من المواد');
+  if(totalCards < 20) suggestions.push('أضف المزيد من البطاقات');
+  if(streak < 3) suggestions.push('حافظ على الدراسة اليومية');
+  if(totalLessons > memorized) suggestions.push('راجع ' + (totalLessons - memorized) + ' درس متبقي');
+
+  var html = 
+    '<div class="modal-overlay show" id="analysisModal" onclick="if(event.target===this)closeAnalysis()">' +
+      '<div class="modal wide">' +
+        '<div class="modal-header">' +
+          '<div class="modal-title"><i class="fa-solid fa-brain"></i><span>تحليل الأداء</span></div>' +
+          '<button class="modal-close" onclick="closeAnalysis()"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-radius:16px;padding:20px;margin-bottom:20px;text-align:center">' +
+            '<div style="font-size:48px;margin-bottom:8px">📊</div>' +
+            '<div style="font-size:36px;font-weight:900;line-height:1">' + pct + '%</div>' +
+            '<div style="font-size:13px;opacity:.9;margin-top:6px">نسبة الحفظ الكلية</div>' +
+          '</div>' +
+          '<h3 style="font-size:15px;color:var(--primary);margin-bottom:12px"><i class="fa-solid fa-chart-line"></i> ملاحظات ذكية</h3>' +
+          insights.map(function(ins){
+            var colors = {
+              good: 'background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86EFAC',
+              info: 'background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:#93C5FD',
+              warn: 'background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:#FDE68A'
+            };
+            return '<div style="' + colors[ins.t] + ';border-radius:12px;padding:12px 14px;margin-bottom:8px;font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:flex-start">' +
+              '<span style="font-size:18px;flex-shrink:0">' + ins.i + '</span><span>' + ins.m + '</span></div>';
+          }).join('') +
+          (suggestions.length > 0 ?
+            '<h3 style="font-size:15px;color:var(--primary);margin:20px 0 12px"><i class="fa-solid fa-lightbulb"></i> اقتراحات</h3>' +
+            suggestions.map(function(s){
+              return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;font-size:13px;line-height:1.6">💡 ' + s + '</div>';
+            }).join('') : '') +
+          '<button class="btn btn-primary btn-block" style="margin-top:20px" onclick="closeAnalysis()"><i class="fa-solid fa-check"></i> فهمت</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  
+  var existing = document.getElementById('analysisModal');
+  if(existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', html);
+  playSound('click');
+}
+
+function closeAnalysis(){
+  var m = document.getElementById('analysisModal');
+  if(m) m.remove();
+}
+   /* =====================================================
+   STUDY GROUPS
+===================================================== */
+async function openGroupsPage(){
+  var content = document.getElementById('content');
+  var titleEl = document.getElementById('topTitle');
+  if(titleEl) titleEl.textContent = 'المجموعات';
+  
+  content.innerHTML = '<div class="content-page"><div class="empty-box"><i class="fa-solid fa-spinner fa-spin"></i><p>جاري التحميل...</p></div></div>';
+  var pageEl = content.querySelector('.content-page');
+  
+  var r = await sb.from('group_members')
+    .select('group_id, study_groups(id, name, code, owner_id)')
+    .eq('user_id', currentUser.id);
+  
+  var groups = (r.data || []).map(function(m){ return m.study_groups; }).filter(Boolean);
+  
+  pageEl.innerHTML =
+    '<div class="page-header">' +
+      '<div class="page-header-left"><h1><i class="fa-solid fa-users"></i> المجموعات</h1><p>ادرس مع أصحابك</p></div>' +
+      '<div class="page-header-actions">' +
+        '<button class="btn btn-primary" onclick="openCreateGroupModal()"><i class="fa-solid fa-plus"></i> مجموعة جديدة</button>' +
+        '<button class="btn btn-ghost" onclick="openJoinGroupModal()"><i class="fa-solid fa-right-to-bracket"></i> انضم</button>' +
+      '</div>' +
+    '</div>' +
+    (groups.length === 0 ?
+      '<div class="empty-state"><div class="empty-state-icon"><i class="fa-solid fa-users"></i></div><h2>لا توجد مجموعات</h2><p>أنشئ مجموعة مع أصحابك</p></div>' :
+      '<div class="subjects-grid">' +
+        groups.map(function(g){
+          return '<div class="subject-card" style="--subject-color:#FF7A00;--subject-color-dark:#E65100">' +
+            '<div class="subject-card-head"><div class="subject-icon"><i class="fa-solid fa-users"></i></div></div>' +
+            '<div class="subject-card-body">' +
+              '<div class="subject-card-name">' + escapeHtml(g.name) + '</div>' +
+              '<div class="subject-card-meta"><span><i class="fa-solid fa-key"></i> ' + g.code + '</span></div>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>'
+    );
+}
+
+function openCreateGroupModal(){
+  var code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  var html = 
+    '<div class="modal-overlay show" id="createGroupModal" onclick="if(event.target===this)this.remove()">' +
+      '<div class="modal narrow">' +
+        '<div class="modal-header">' +
+          '<div class="modal-title"><i class="fa-solid fa-users"></i><span>مجموعة جديدة</span></div>' +
+          '<button class="modal-close" onclick="document.getElementById(\'createGroupModal\').remove()"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div class="form-group"><label class="form-label">اسم المجموعة</label>' +
+            '<input type="text" class="form-input" id="groupName" placeholder="مثال: أصحاب الرياضيات">' +
+          '</div>' +
+          '<div class="form-group"><label class="form-label">كود الدخول</label>' +
+            '<div style="display:flex;gap:8px">' +
+              '<input type="text" class="form-input" value="' + code + '" readonly style="font-family:monospace;font-weight:700;letter-spacing:2px;text-align:center">' +
+              '<button class="btn btn-ghost" onclick="navigator.clipboard.writeText(\'' + code + '\');toast(\'تم النسخ\',\'success\')"><i class="fa-solid fa-copy"></i></button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button class="btn btn-ghost" onclick="document.getElementById(\'createGroupModal\').remove()">إلغاء</button>' +
+          '<button class="btn btn-primary" onclick="createGroup(\'' + code + '\')">إنشاء</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function createGroup(code){
+  var name = document.getElementById('groupName').value.trim();
+  if(!name){ toast('اكتب اسم المجموعة', 'warning'); return; }
+  
+  var r = await sb.from('study_groups').insert({
+    name: name, code: code, owner_id: currentUser.id
+  }).select().single();
+  
+  if(r.error){ toast('خطأ: ' + r.error.message, 'error'); return; }
+  
+  await sb.from('group_members').insert({
+    group_id: r.data.id, user_id: currentUser.id
+  });
+  
+  document.getElementById('createGroupModal').remove();
+  playSound('success');
+  celebrate();
+  toast('🎉 تم إنشاء المجموعة!', 'success');
+  openGroupsPage();
+}
+
+function openJoinGroupModal(){
+  var html = 
+    '<div class="modal-overlay show" id="joinGroupModal" onclick="if(event.target===this)this.remove()">' +
+      '<div class="modal narrow">' +
+        '<div class="modal-header">' +
+          '<div class="modal-title"><i class="fa-solid fa-right-to-bracket"></i><span>انضم لمجموعة</span></div>' +
+          '<button class="modal-close" onclick="document.getElementById(\'joinGroupModal\').remove()"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div class="form-group"><label class="form-label">كود المجموعة</label>' +
+            '<input type="text" class="form-input" id="joinCode" placeholder="مثال: ABC123" style="text-align:center;font-family:monospace;font-weight:700;letter-spacing:3px;text-transform:uppercase">' +
+          '</div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button class="btn btn-ghost" onclick="document.getElementById(\'joinGroupModal\').remove()">إلغاء</button>' +
+          '<button class="btn btn-primary" onclick="joinGroup()">انضم</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function joinGroup(){
+  var code = document.getElementById('joinCode').value.trim().toUpperCase();
+  if(!code){ toast('اكتب الكود', 'warning'); return; }
+  
+  var r = await sb.from('study_groups').select('id').eq('code', code).single();
+  if(r.error || !r.data){ toast('⚠️ الكود غير صحيح', 'error'); return; }
+  
+  var check = await sb.from('group_members').select('id').eq('group_id', r.data.id).eq('user_id', currentUser.id).maybeSingle();
+  if(check.data){ toast('انت عضو بالفعل', 'info'); return; }
+  
+  await sb.from('group_members').insert({
+    group_id: r.data.id, user_id: currentUser.id
+  });
+  
+  document.getElementById('joinGroupModal').remove();
+  playSound('success');
+  celebrate();
+  toast('🎉 انضممت للمجموعة!', 'success');
+  openGroupsPage();
+}
 </script>
 </body>
 </html>
