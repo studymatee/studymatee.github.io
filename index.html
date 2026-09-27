@@ -3556,6 +3556,258 @@ h1,h2,h3,h4{font-weight:700;letter-spacing:-.02em}
   .splash-loader{width:160px}
   .splash-hint{font-size:11px;padding:6px 12px}
 }
+/* =====================================================
+   MUSIC BUTTON
+===================================================== */
+#musicBtn{
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+}
+#musicBtn:hover{
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 12px 32px var(--primary-glow) !important;
+}
+#musicBtn.playing{
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  animation: musicPulse 1.5s ease-in-out infinite;
+}
+@keyframes musicPulse{
+  0%, 100%{ box-shadow: 0 8px 24px var(--primary-glow); }
+  50%{ box-shadow: 0 8px 40px var(--primary-glow); }
+}
+
+/* =====================================================
+   VOICE BUTTON
+===================================================== */
+#voiceBtn{
+  transition: all .2s;
+}
+#voiceBtn:hover{
+  color: var(--primary) !important;
+}
+#voiceBtn.listening{
+  color: var(--red) !important;
+  animation: voicePulse 1s ease-in-out infinite;
+}
+@keyframes voicePulse{
+  0%, 100%{ transform: translateY(-50%) scale(1); }
+  50%{ transform: translateY(-50%) scale(1.2); }
+}
+
+/* =====================================================
+   VIRTUAL PET
+===================================================== */
+#petWidget{
+  position: fixed;
+  bottom: 24px;
+  left: 90px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 24px var(--primary-glow);
+  z-index: 50;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  font-size: 32px;
+  user-select: none;
+  position: fixed;
+}
+#petWidget::before{
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  opacity: .3;
+  z-index: -1;
+  animation: petGlow 3s ease-in-out infinite;
+}
+@keyframes petGlow{
+  0%, 100%{ transform: scale(1); opacity: .3; }
+  50%{ transform: scale(1.15); opacity: .5; }
+}
+#petWidget:hover{
+  transform: scale(1.1) translateY(-4px);
+  box-shadow: 0 12px 32px var(--primary-glow);
+}
+#petWidget:active{
+  transform: scale(.95);
+}
+#petWidget.happy{
+  animation: petBounce 1.5s ease-in-out infinite;
+}
+@keyframes petBounce{
+  0%, 100%{ transform: translateY(0) rotate(-3deg); }
+  50%{ transform: translateY(-10px) rotate(3deg); }
+}
+#petWidget.sad{
+  animation: petShake 2s ease-in-out infinite;
+  filter: grayscale(30%);
+}
+@keyframes petShake{
+  0%, 100%{ transform: translateX(0); }
+  25%{ transform: translateX(-2px); }
+  75%{ transform: translateX(2px); }
+}
+#petMood{
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  font-size: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.3));
+  animation: moodPop 2s ease-in-out infinite;
+}
+@keyframes moodPop{
+  0%, 100%{ transform: scale(1); }
+  50%{ transform: scale(1.15); }
+}
+
+/* =====================================================
+   ANALYSIS MODAL
+===================================================== */
+#analysisModal .modal-body h3{
+  font-weight: 700;
+}
+#analysisModal .modal-body > div{
+  animation: slideUp .3s ease-out backwards;
+}
+#analysisModal .modal-body > div:nth-child(2){ animation-delay: .05s; }
+#analysisModal .modal-body > div:nth-child(3){ animation-delay: .1s; }
+#analysisModal .modal-body > div:nth-child(4){ animation-delay: .15s; }
+#analysisModal .modal-body > div:nth-child(5){ animation-delay: .2s; }
+#analysisModal .modal-body > div:nth-child(6){ animation-delay: .25s; }
+
+/* =====================================================
+   GROUPS PAGE
+===================================================== */
+.group-card{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.group-card::before{
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: var(--transition);
+}
+.group-card:hover{
+  border-color: var(--primary);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,.3), 0 0 30px var(--primary-glow);
+}
+.group-card:hover::before{
+  transform: scaleX(1);
+}
+
+.group-code{
+  font-family: 'Courier New', monospace;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--primary);
+  background: var(--primary-soft);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: inline-block;
+}
+
+/* =====================================================
+   SEASONAL BADGE
+===================================================== */
+.seasonal-badge{
+  position: relative;
+}
+.seasonal-badge::after{
+  content: '⏰';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 14px;
+  animation: pulse 2s infinite;
+}
+
+/* =====================================================
+   MOBILE ADJUSTMENTS
+===================================================== */
+@media (max-width: 768px){
+  #musicBtn{
+    bottom: 90px !important;
+    right: 16px !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
+  }
+  
+  #petWidget{
+    bottom: 90px !important;
+    left: 16px !important;
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 28px !important;
+  }
+  
+  #petMood{
+    font-size: 18px;
+  }
+  
+  #voiceBtn{
+    left: 40px;
+  }
+}
+
+@media (max-width: 480px){
+  #musicBtn{
+    bottom: 84px !important;
+    right: 12px !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+  
+  #petWidget{
+    bottom: 84px !important;
+    left: 12px !important;
+    width: 56px !important;
+    height: 56px !important;
+    font-size: 26px !important;
+  }
+  
+  #petMood{
+    font-size: 16px;
+  }
+}
+
+/* =====================================================
+   MUSIC BUTTON ANIMATION
+===================================================== */
+@keyframes musicFloat{
+  0%, 100%{ transform: translateY(0); }
+  50%{ transform: translateY(-4px); }
+}
+#musicBtn i.fa-pause{
+  animation: none;
+}
+#musicBtn i.fa-music{
+  animation: musicFloat 2s ease-in-out infinite;
+}
    
 </style>
 </head>
