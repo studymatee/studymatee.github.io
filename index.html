@@ -4247,6 +4247,16 @@ h1,h2,h3,h4{font-weight:700;letter-spacing:-.02em}
     </p>
   </div>
 </div>
+
+   <!-- زر الموسيقى -->
+<button id="musicBtn" onclick="toggleMusic()" title="موسيقى التركيز" style="position:fixed;bottom:24px;right:24px;z-index:50;width:52px;height:52px;border-radius:16px;background:var(--surface);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.3);transition:.25s">
+  <i class="fa-solid fa-music"></i>
+</button>
+
+<!-- مشغل الموسيقى -->
+<audio id="bgMusic" loop preload="none">
+  <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" type="audio/mpeg">
+</audio>
    
 <script>
    /* =====================================================
@@ -8870,20 +8880,23 @@ function openSearchModal(){
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:250;display:flex;align-items:flex-start;justify-content:center;padding:80px 20px 20px;animation:fadeIn .2s';
   overlay.onclick = function(e){ if(e.target === overlay) overlay.remove(); };
 
-  overlay.innerHTML =
-    '<div style="background:var(--bg-1);border:1px solid var(--border);border-radius:16px;width:100%;max-width:600px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:popIn .3s">' +
-      '<div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border)">' +
-        '<i class="fa-solid fa-magnifying-glass" style="color:var(--primary);font-size:18px"></i>' +
-        '<input type="text" id="searchQuickInput" placeholder="ابحث عن درس، مادة، أو بطاقة..." ' +
-          'style="flex:1;background:none;border:none;color:var(--text);font-size:16px;font-family:var(--font);outline:none" ' +
-          'autofocus>' +
-        '<button onclick="document.getElementById(\'searchOverlay\').remove()" ' +
-          'style="background:var(--surface);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px">' +
-          '<i class="fa-solid fa-xmark"></i>' +
-        '</button>' +
-      '</div>' +
-      '<div id="searchResults" style="max-height:500px;overflow-y:auto;padding:8px"></div>' +
-    '</div>';
+overlay.innerHTML =
+  '<div style="...">' +
+    '<div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border);position:relative">' +
+      '<i class="fa-solid fa-magnifying-glass" style="color:var(--primary);font-size:18px"></i>' +
+      '<input type="text" id="searchQuickInput" placeholder="ابحث عن درس، مادة، أو بطاقة..." ' +
+        'style="flex:1;background:none;border:none;color:var(--text);font-size:16px;font-family:var(--font);outline:none;padding-left:40px" ' +
+        'autofocus>' +
+      '<button onclick="startVoiceSearch()" id="voiceBtn" title="بحث صوتي" style="position:absolute;left:36px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px;z-index:5">' +
+        '<i class="fa-solid fa-microphone"></i>' +
+      '</button>' +
+      '<button onclick="document.getElementById(\'searchOverlay\').remove()" ' +
+        'style="background:var(--surface);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px">' +
+        '<i class="fa-solid fa-xmark"></i>' +
+      '</button>' +
+    '</div>' +
+    '<div id="searchResults" style="max-height:500px;overflow-y:auto;padding:8px"></div>' +
+  '</div>';
 
   document.body.appendChild(overlay);
 
@@ -9742,6 +9755,72 @@ document.addEventListener('visibilitychange', function(){
   });
 
 })();
+   /* =====================================================
+   AUTO THEME (وضع ليلي تلقائي)
+===================================================== */
+function autoTheme(){
+  // لو المستخدم اختار الوضع يدوياً، نحترم اختياره
+  if(localStorage.getItem('theme_manual') === 'true'){
+    var saved = localStorage.getItem('theme_value') || 'dark';
+    document.body.setAttribute('data-mode', saved);
+    return;
+  }
+
+  // نجيب الوقت الحالي
+  var now = new Date();
+  var hour = now.getHours();
+
+  // الليل: من 7 مساءً إلى 5 صباحاً
+  // النهار: من 5 صباحاً إلى 7 مساءً
+  var isNight = (hour >= 19 || hour < 5);
+  var mode = isNight ? 'dark' : 'light';
+
+  // نطبق الوضع
+  document.body.setAttribute('data-mode', mode);
+  localStorage.setItem('theme_value', mode);
+
+  // نحدّث الـ state لو موجود
+  if(typeof state !== 'undefined' && state.settings){
+    state.settings.mode = mode;
+  }
+}
+
+// تشغيل عند فتح الموقع
+autoTheme();
+
+// تشغيل كل دقيقة (عشان يتحول تلقائياً)
+setInterval(autoTheme, 60000);
+/* =====================================================
+   MUSIC FOR FOCUS
+===================================================== */
+var musicPlaying = false;
+
+function toggleMusic(){
+  var audio = document.getElementById('bgMusic');
+  var btn = document.getElementById('musicBtn');
+  if(!audio || !btn) return;
+
+  if(musicPlaying){
+    audio.pause();
+    musicPlaying = false;
+    btn.style.background = 'var(--surface)';
+    btn.style.color = 'var(--text-2)';
+    btn.innerHTML = '<i class="fa-solid fa-music"></i>';
+    toast('🎵 تم إيقاف الموسيقى', 'info');
+  } else {
+    audio.volume = 0.3;
+    audio.play().then(function(){
+      musicPlaying = true;
+      btn.style.background = 'linear-gradient(135deg,var(--primary),var(--primary-dark))';
+      btn.style.color = '#fff';
+      btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+      toast('🎵 موسيقى التركيز تعمل', 'success');
+    }).catch(function(){
+      toast('⚠️ اضغط مرة ثانية', 'warning');
+    });
+  }
+}
+   
 </script>
 </body>
 </html>
